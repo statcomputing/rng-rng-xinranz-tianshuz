@@ -1,0 +1,337 @@
+---
+title: "5361 HW3"
+author: "Xinran Zheng & Tianshu Zhao"
+date: "February 27, 2018"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
+library(ggplot2)
+
+FunctionG <- function(x)
+{
+  
+  return(normalC * (2 * x ** (theta - 1) + x ** (theta - 1/2)) * exp(-x))
+}
+
+InverseTransform <- function(x)
+{
+  cdf <- integrate(f, lower = 0, upper = x)
+  return(cdf[[1]] - u)
+}
+
+x <- seq(from = 0, to = 10, by = 0.0001)
+theta = 2
+normalC <- 1 / (2 * gamma(theta) + gamma(theta + 1/2))
+f = FunctionG
+
+result2B <- c()
+result2C <- c()
+
+for (i in 1:10000) 
+{
+  u <- runif(1)
+  rngG <- uniroot(InverseTransform, interval = c(0,20))[[1]]
+  result2B <- c(result2B, rngG)
+}
+
+while (length(result2C) <= 10000) 
+{
+  u <- runif(1)
+  rngG <- uniroot(InverseTransform, interval = c(0,20))[[1]]
+  densityG <- (2 * rngG ** (theta - 1) + rngG ** (theta - 1/2)) * exp(-rngG)
+  densityF <- ((4 + rngG) ** 0.5) * (rngG ** (theta - 1)) * exp(- rngG)
+  ratio2C <- densityF / densityG
+  if (ratio2C >= runif(1))
+  {
+    result2C <- c(result2C, rngG)
+  }
+}
+
+kde2B <- density(result2B)
+kde2C <- density(result2C)
+density2 <- FunctionG(x)
+outDF <- data.frame(density2, rownames = x)
+plotQ2 <- ggplot(outDF, aes(x, density2, color = "True Density")) + geom_line() + 
+  labs(x = "x", y = "Density Question 2 B", caption = paste("theta = ", as.character(theta))) + 
+  theme(plot.caption = element_text(hjust = 0.5))
+plotQ2B <- plotQ2 + geom_line(data = as.data.frame(kde2B$y), 
+                              mapping = aes(x = kde2B$x, y = kde2B$y, color = "Kernel Density Estimation"))
+rmdPlot2B <- plotQ2B + scale_colour_manual(breaks = c("Kernel Density Estimation", "True Density"), 
+                              values = c("red", "black"))
+functionF2 <- function(x)
+{
+  return(((4 + x) ** 0.5) * (x ** (theta - 1)) * exp(- x))
+}
+cF2 <- 1 / integrate(functionF2, lower = 0, upper = Inf)$value
+trueDensity2F <- functionF2(x) * cF2
+plotQ2F <- ggplot(as.data.frame(trueDensity2F), 
+                  aes(x = x, y = trueDensity2F, color = "True Density")) + 
+  geom_line() + 
+  labs(x = "x", y = "Density Question 2 C")
+plotQ2C <- plotQ2F + 
+  geom_line(data = as.data.frame(kde2C$y), mapping = aes(x = kde2C$x, y = kde2C$y, color = "Kernel Density Estimation")) + 
+  labs(x = "x", y = "Density Question 2 C", caption = paste("theta = ", as.character(theta))) + 
+  theme(plot.caption = element_text(hjust = 0.5))
+rmdPlot2C <- plotQ2C + scale_colour_manual(breaks = c("Kernel Density Estimation", "True Density"),
+                               values = c("red", "black"))
+
+
+
+thetaQ3 <- 7.7
+betaQ3 <- 5.5
+p1Q3A <- (gamma(thetaQ3) * gamma(1)) / gamma(thetaQ3 + 1)
+p2Q3A <- ((gamma(betaQ3) * gamma(1)) / gamma(betaQ3 + 1))
+functionF3A <- function(x)
+{
+  return((x ** (thetaQ3 - 1)) / (1 + x ** 2) + ((2 + x ** 2) ** 0.5) * ((1 - x) ** (betaQ3 - 1)))
+}
+cF3A <- 1 / integrate(functionF3A, lower = 0, upper = 1)$value
+dummyXQ3 <- seq(from = 0, to = 1, by = 0.0001)
+realDQ3 <- cF3A * functionF3A(dummyXQ3)
+df3F <- data.frame(cF3A * functionF3A(dummyXQ3), row.names = dummyXQ3)
+
+
+function3G <- function(x)
+{
+  return((0.5 / p1Q3A) * x ** (thetaQ3 - 1) + (0.5 / p2Q3A) * ((1 - x) ** (betaQ3 - 1)))
+}
+alphaQ3A <- 2 * max(p1Q3A, p2Q3A * (3 ** 0.5))
+
+
+
+alphaQ3A1 <- p1Q3A
+alphaQ3A2 <- p2Q3A * (3 ** 0.5)
+
+result3AA <- c()
+while (length(result3AA) <= 10000) 
+{
+  if (runif(1) <= alphaQ3A1 / (alphaQ3A1 + alphaQ3A2))
+  {
+    rngG <- rbeta(1, thetaQ3, 1)
+    densityG <- dbeta(rngG, thetaQ3, 1)
+    densityF <- (rngG ** (thetaQ3 - 1)) / (1 + rngG ** 2)
+    ratio3AA <- densityF / (densityG * alphaQ3A1)
+    if (ratio3AA >= runif(1))
+    {
+      result3AA <- c(result3AA, rngG)
+    }
+  }
+  else
+  {
+    rngG <- rbeta(1, 1, betaQ3)
+    densityG <- dbeta(rngG, 1, betaQ3)
+    densityF <- ((2 + rngG ** 2) ** 0.5) * ((1 - rngG) ** (betaQ3 - 1))
+    ratio3AA <- densityF / (densityG * alphaQ3A2)
+    if (ratio3AA >= runif(1))
+    {
+      result3AA <- c(result3AA, rngG)
+    }
+  }
+}
+
+kdeQ3AA <- density(result3AA)
+plotQ3F <- ggplot(as.data.frame(realDQ3), aes(x = dummyXQ3, y = realDQ3, color = "True Density")) + geom_line() + labs(x = "x", y = "Density Question 3")
+
+plotQ3AA <- plotQ3F + 
+  geom_line(data = as.data.frame(kdeQ3AA$y), mapping = aes(x = kdeQ3AA$x, y = kdeQ3AA$y, color = "Kernel Density Estimation")) + 
+  labs(x = "x", y = "Density Question 3 A", caption = paste("theta = ", as.character(thetaQ3), ", beta = ", as.character(betaQ3))) + 
+  theme(plot.caption = element_text(hjust = 0.5))
+rmdPlot3A <- plotQ3AA + scale_colour_manual(breaks = c("Kernel Density Estimation", "True Density"),
+                               values = c("red", "black"))
+
+
+
+f <- function3G
+result3A <- c()
+while (length(result3A) <= 10000) 
+{
+  u <- runif(1)
+  rngG <- uniroot(InverseTransform, interval = c(0, 1))[[1]]
+  densityG <- f(rngG)
+  densityF <- (rngG ** (thetaQ3 - 1)) / (1 + rngG ** 2) + ((2 + rngG ** 2) ** 0.5) * ((1 - rngG) ** (betaQ3 - 1))
+  ratio3A <- densityF / (densityG * alphaQ3A)
+  if (ratio3A >= runif(1))
+  {
+    result3A <- c(result3A, rngG)
+  }
+}
+kdeQ3A <- density(result3A)
+plotQ3A <- plotQ3F + 
+  geom_line(data = as.data.frame(kdeQ3A$y), mapping = aes(x = kdeQ3A$x, y = kdeQ3A$y, color = "Kernel Density Estimation")) + 
+  labs(x = "x", y = "Density Question 3 B", caption = paste("theta = ", as.character(thetaQ3), ", beta = ", as.character(betaQ3))) + 
+  theme(plot.caption = element_text(hjust = 0.5))
+rmdPlot3B <- plotQ3A + scale_colour_manual(breaks = c("Kernel Density Estimation", "True Density"), 
+                              values = c("red", "black"))
+
+
+```
+
+
+# Question 1
+We first consider the expression which contains $\beta$
+$$\sum_{i=1}^n\sum_{j=1}^m p^{(k+1)}_{ij}(y_i-x_i^T\beta_j)^2/(2\sigma^2)$$
+The intuition is that $\beta$ should be the weighted average of the samples for every $j$. The weights equals $p^{(k+1)}_{ij}x_ix^T$, and the samples are of the form $\frac{y}{x^T_i}$. We use $\frac{y}{x^T_i}$ to represent a vector $x^*\in\mathbb{R}^p s.t. x^T\cdot x^*=y$. 
+$$\beta_j^{(k+1)}=argmax_\beta\{-\sum_{i=1}^n\sum_{j=1}^mp^{(k+1)}_{ij}x_ix^T_i(\frac{y}{x^T_i}-\beta_j)^2/(2\sigma^2)\}$$
+
+$$=(\sum_{i=1}^nx_ip^{(k+1)}_{ij}y_i)/(\sum_{i=1}^np^{(k+1)}_{ij}x_ix^T_i)$$
+
+Next, we consider the expression which contains $\sigma$. Since $\sigma^2$ appears only in the density function of normal distribution and is the variance of the normal distribution models, to maximize the log likelihood we need to set $\sigma^2$ to equal the sample variance.
+$$\sigma^{2(k+1)}=\frac{\sum_{j=1}^m\sum_{i=1}^np^{(k+1)}_{ij}(y_i-x^T_i\beta^{(k+1)}_j-0)^2}{\sum_{j=1}^m\sum_{i=1}^np^{(k+1)}_{ij}}$$
+
+
+$$=\frac{\sum_{j=1}^m\sum_{i=1}^np^{(k+1)}_{ij}(y_i-x^T_i\beta^{(k+1)}_j)^2}{\sum_{i=1}^n1}$$
+
+
+$$=\frac{\sum_{j=1}^m\sum_{i=1}^np^{(k+1)}_{ij}(y_i-x^T_i\beta^{(k+1)}_j)^2}{n}$$
+
+Finally, we obtain $\pi$ using Lagrangian multipliers.
+$$L(\pi,\lambda)=Q(\psi|\psi(k))-\lambda(\vec{\pi}\cdot \vec{1})=0$$
+
+
+$$L_{\pi j}=\sum_{i=1}^np^{(k+1)}_{ij}\frac{1}{\pi_j}-\lambda=0$$
+
+
+$$\pi_j=\frac{\sum_{i=1}^np^{(k+1)}_{ij}}{\lambda}$$
+
+
+$$\sum_{j=1}^m\pi_j=\frac{\sum_{j=1}^m\sum_{i=1}^np^{(k+1)}_{ij}}{\lambda}=\frac{n}{\lambda}=1$$
+
+
+$$\lambda=n$$
+
+
+$$\pi_j=\frac{\sum_{i=1}^np^{(k+1)}_{ij}}{\lambda}=\frac{\sum_{i=1}^np^{(k+1)}_{ij}}{n}$$
+
+
+#Question 2
+##(a)
+$$C\int_0^\infty(2x^{\theta-1}+x^{\theta-\frac{1}{2}})e^{-x}dx$$
+
+
+$$=2C\int_0^\infty x^{\theta-1}e^{-x}dx+C\int_0^\infty x^{\theta-\frac{1}{2}}e^{-x}dx$$
+
+
+$$=2C\Gamma(\theta)+C\Gamma(\theta+\frac{1}{2})$$
+
+
+$$=C(2\Gamma(\theta)+\Gamma(\theta+\frac{1}{2}))=1$$
+
+
+$$C=\frac{1}{2\Gamma(\theta)+\Gamma(\theta+\frac{1}{2})}$$
+
+Let
+$$g_1=\frac{1}{\Gamma(\theta)}x^{\theta-1}e^{-x}$$
+
+$$g_2=\frac{1}{\Gamma(\theta+\frac{1}{2})}x^{\theta-\frac{1}{2}}e^{-x}$$
+
+Then
+
+$$g=C_1 g_1 + C_2 g_2$$
+
+where
+
+$$C_1=\frac{2\Gamma(\theta)}{2\Gamma(\theta)+\Gamma(\theta+\frac{1}{2})}$$
+
+$$C_2=\frac{\Gamma(\theta+\frac{1}{2})}{2\Gamma(\theta)+\Gamma(\theta+\frac{1}{2})}$$
+
+
+
+##(b)
+1.Obtain $$C\int_0^x(2s^{\theta-1}+s^{\theta-\frac{1}{2}})e^{-s}ds$$;
+
+2.Find x such that $$C\int_0^x(2s^{\theta-1}+s^{\theta-\frac{1}{2}})e^{-s}ds-u=0$$where u~unif(0,1);
+
+3.Repeat step 2 until $$|\vec x|=10000$$.
+
+```{r autodep = TRUE, echo = FALSE, warning = FALSE}
+
+rmdPlot2B
+
+```
+
+
+##(c)
+Let $$\sqrt{4+x} \cdot x^{\theta-1}e^{-x}\leq \alpha C(2x^{\theta-1}+x^{\theta-\frac{1}{2}})e^{-x}$$
+
+
+$$\alpha C(2+x^{\frac{1}{2}})\geq \sqrt{4+x}$$
+
+
+$$\alpha C\geq \frac{\sqrt{4+x}}{2+\sqrt{x}}$$
+Notice that $$\forall x \in \mathbb{R}^+,\frac{\sqrt{4+x}}{2+\sqrt{x}}\leq 1,$$
+so we choose $$\alpha C=1,\alpha=\frac{1}{C}$$
+
+1.Sample x from $$g=C(2x^{\theta}+x^{\theta-\frac{1}{2}})e^{-x}$$
+by inverse transform sampling;
+
+2.If $$U\leq \frac{f(x)}{\alpha g(x)}$$
+where U~unif(0,1),then keep x;
+
+3.Repeat step 1 and step 2 until $$|\vec x|=10000$$.
+
+```{r autodep = TRUE, echo = FALSE, warning = FALSE}
+
+rmdPlot2C
+
+```
+
+
+#Question 3
+##(a)
+Let $$g=P_1(\frac{x^{\theta-1}}{B(\theta,1)})+P_2(\frac{(1-x)^{\beta-1}}{B(2,\beta)})$$
+
+
+$$P_1(\frac{x^{\theta-1}}{B(\theta,1)})\geq \frac{x^{\theta-1}}{1+x^2} \Rightarrow P_1(\frac{x^{\theta-1}}{B(\theta,1)})\geq x^{\theta-1}\Rightarrow P_1\geq B(\theta,1)$$
+
+
+$$P_2(\frac{(1-x)^{\beta-1}}{B(1,\beta)})\geq \sqrt{2+x^2}(1-x)^{\beta-1} \Rightarrow P_2(\frac{(1-x)^{\beta-1}}{B(1,\beta)})\geq \sqrt{3}(1-x)^{\beta-1} \Rightarrow P_2\geq \sqrt{3}B(1,\beta)$$
+Now, choose $$P_1=B(\theta,1),P_2=\sqrt{3}B(1,\beta)$$
+
+1.If $$U_1\leq \frac{P_1}{P_1+P_2}$$
+where $$U_1{\text ~}unif(0,1)$$
+set $$g=Beta(\theta,1),
+\\f=\frac{x^{\theta-1}}{1+x^2},\alpha=P_1$$
+else set 
+$$g=Beta(1,\beta),
+\\f=\sqrt{2+x^2}(1-x)^{\beta-1},\alpha=P_2$$;
+
+2.Sample $$x{\text ~}g
+\\U_2{\text ~}unif(0,1)$$
+if $$U_2\leq \frac{f(x)}{\alpha g(x)},$$
+keep x;
+
+3.Repeat step 1 and step 2 until $$|\vec x|=10000$$.
+
+```{r autodep = TRUE, echo = FALSE, warning = FALSE}
+
+rmdPlot3A
+
+```
+
+
+##(b)
+Let $$g=\frac{1}{2}Beta(\theta,1)+\frac{1}{2}Beta(1,\beta)$$
+$$\alpha_1 Beta(\theta,1)\geq \frac{x^{\theta-1}}{1+x^2} \Rightarrow \alpha_1\geq B(\theta,1)$$
+
+
+$$\alpha_2 Beta(1,\beta)\geq \sqrt{2+x^2}(1-x)^{\beta-1} \Rightarrow \alpha_2\geq \sqrt{3}B(1,\beta)$$
+Choose 
+$$\alpha=max(2\alpha_1,2\alpha_2)$$
+then$$\alpha g\geq \alpha_1 Beta(\theta,1)+\alpha_2 Beta(1,\beta)\geq f$$
+
+1.Generate $$x{\text ~}g$$ 
+by inverse transform sampling;
+
+2.If $$U\leq \frac{f(x)}{\alpha g(x)}$$
+where $$U{\text ~}unif(0,1)$$, keep x;
+
+3.Repeat step 1 and step 2 until $$|\vec x|= 10000$$.
+
+```{r autodep = TRUE, echo = FALSE, warning = FALSE}
+
+rmdPlot3B
+
+```
+
