@@ -221,6 +221,21 @@ $$=C(2\Gamma(\theta)+\Gamma(\theta+\frac{1}{2}))=1$$
 
 $$C=\frac{1}{2\Gamma(\theta)+\Gamma(\theta+\frac{1}{2})}$$
 
+Let
+$$g_1=\int_0^\infty \frac{1}{\Gamma(\theta)x^{\theta-1}e^{-x}dx$$
+
+$$g_2=\int_0^\infty \frac{1}{\Gamma(\theta+\frac{1}{2})x^{\theta-\frac{1}{2}}e^{-x}dx$$
+
+Then
+
+$$g=C_1 g_1 + C_2 g_2$$
+
+where
+
+$$C_1=\frac{2\Gamma(\theta)}{2\Gamma(\theta)+\Gamma(\theta+\frac{1}{2})}$$
+
+$$C_2=\frac{\Gamma(\theta+\frac{1}{2})}{2\Gamma(\theta)+\Gamma(\theta+\frac{1}{2})}$$
+
 
 
 ##(b)
